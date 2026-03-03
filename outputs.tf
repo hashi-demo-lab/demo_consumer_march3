@@ -45,5 +45,5 @@ output "subnet_ids" {
 
 output "asg_security_group_id" {
   description = "Security group ID for ASG instances for manual rule additions"
-  value       = "" # TODO: wire to aws_security_group.asg_instances.id in Item D (Security groups)
+  value       = aws_security_group.asg_instances.id
 }

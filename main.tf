@@ -95,6 +95,40 @@ resource "time_sleep" "alb_ready" {
 }
 
 # ============================================================================
+# Security Groups
+# ============================================================================
+
+resource "aws_security_group" "asg_instances" {
+  name        = "${local.naming_prefix}-asg-sg"
+  description = "Security group for ASG instances"
+  vpc_id      = data.aws_vpc.default.id
+
+  tags = {
+    Component = "security"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "asg_from_alb" {
+  security_group_id = aws_security_group.asg_instances.id
+
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = module.alb.security_group_id
+
+  description = "Allow HTTP from ALB"
+}
+
+resource "aws_vpc_security_group_egress_rule" "asg_to_internet" {
+  security_group_id = aws_security_group.asg_instances.id
+
+  ip_protocol = "-1"
+  cidr_ipv4   = "0.0.0.0/0"
+
+  description = "Allow all outbound"
+}
+
+# ============================================================================
 # Auto Scaling Group
 # ============================================================================
 
