@@ -1,0 +1,167 @@
+# ============================================================================
+# Consumer ASG Deployment - Example Variable Configuration
+# ============================================================================
+# Copy this file to terraform.auto.tfvars and customize values for your
+# deployment. All variables have defaults except 'owner', which is required.
+#
+# Usage:
+#   cp terraform.auto.tfvars.example terraform.auto.tfvars
+#   # Edit terraform.auto.tfvars and set your values
+#   terraform plan
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# General Configuration
+# ----------------------------------------------------------------------------
+
+# AWS region for resource deployment
+# Valid values: Any AWS region (e.g., ap-southeast-2, us-east-1, eu-west-1)
+# Default: "ap-southeast-2"
+aws_region = "ap-southeast-2"
+
+# Project identifier for resource naming and tagging
+# Used to construct resource names as: {project_name}-{environment}-{resource}
+# Default: "consumer-asg"
+project_name = "consumer-asg"
+
+# Environment name for resource tagging and configuration
+# Valid values: "development", "staging", "production"
+# Default: "development"
+environment = "development"
+
+# Owner email or team identifier for resource accountability
+# REQUIRED: This variable has no default and must be set
+# Example: "platform-team@example.com" or "jane.doe@example.com"
+owner = "platform-team@example.com"
+
+# ----------------------------------------------------------------------------
+# EC2 Instance Configuration
+# ----------------------------------------------------------------------------
+
+# EC2 instance type for ASG launch template
+# Valid values: t2.* or t3.* instance types (e.g., t3.micro, t3.small, t2.medium)
+# Default: "t3.micro"
+# Cost impact: t3.micro ~$10.66/month, t3.small ~$21.32/month (ap-southeast-2)
+instance_type = "t3.micro"
+
+# ----------------------------------------------------------------------------
+# Auto Scaling Group Configuration
+# ----------------------------------------------------------------------------
+
+# Minimum number of EC2 instances in Auto Scaling Group
+# Valid values: >= 0 and <= asg_max_size
+# Default: 1
+# Cost impact: Each instance adds ~$10.66/month (t3.micro in ap-southeast-2)
+asg_min_size = 1
+
+# Maximum number of EC2 instances in Auto Scaling Group
+# Valid values: >= asg_min_size and <= 10
+# Default: 3
+# Note: ASG will scale between min and max based on CPU utilization
+asg_max_size = 3
+
+# Initial desired number of EC2 instances in Auto Scaling Group
+# Valid values: >= asg_min_size and <= asg_max_size
+# Default: 1
+# Note: Must be within [asg_min_size, asg_max_size] range
+asg_desired_capacity = 1
+
+# Time in seconds after instance launch before health checks start
+# Valid values: >= 0
+# Default: 300 (5 minutes)
+# Recommendation: Increase if application startup takes longer than 5 minutes
+asg_health_check_grace_period = 300
+
+# ----------------------------------------------------------------------------
+# Auto Scaling Policy Configuration
+# ----------------------------------------------------------------------------
+
+# Target CPU utilization percentage for auto-scaling policy
+# Valid values: > 0 and <= 100
+# Default: 70.0
+# How it works: ASG scales out when average CPU > target, scales in when CPU < target
+# Lower values (e.g., 50) = more aggressive scaling, higher cost
+# Higher values (e.g., 80) = less aggressive scaling, lower cost, may impact performance
+cpu_target_value = 70.0
+
+# ----------------------------------------------------------------------------
+# Application Load Balancer Configuration
+# ----------------------------------------------------------------------------
+
+# HTTP path for ALB target group health checks
+# Valid values: Must start with / (e.g., /, /health, /api/status)
+# Default: "/"
+# Note: Application must return HTTP 200 status code at this path for healthy status
+alb_health_check_path = "/"
+
+# Time in seconds between ALB health checks
+# Valid values: >= 5 and <= 300
+# Default: 30
+# Recommendation: Shorter interval (e.g., 10) = faster failure detection, higher API calls
+alb_health_check_interval = 30
+
+# ----------------------------------------------------------------------------
+# CloudWatch Alarm Configuration
+# ----------------------------------------------------------------------------
+
+# CPU utilization percentage threshold for CloudWatch alarm
+# Valid values: > 0 and <= 100
+# Default: 80.0
+# Note: Alarm triggers when ASG average CPU > threshold for 2 consecutive 5-minute periods
+# Recommendation: Set higher than cpu_target_value to catch sustained high load
+alarm_cpu_threshold = 80.0
+
+# ALB target response time in seconds threshold for CloudWatch alarm
+# Valid values: > 0
+# Default: 1.0
+# Note: Alarm triggers when average response time > threshold for 2 consecutive 5-minute periods
+# Recommendation: Set based on application SLA (e.g., 0.5s for sub-second requirement)
+alarm_response_time_threshold = 1.0
+
+# ============================================================================
+# Advanced Configuration (Optional)
+# ============================================================================
+# The following variables are typically not changed from defaults for
+# development environments. Uncomment and modify if needed.
+
+# Example: Change region to US East
+# aws_region = "us-east-1"
+
+# Example: Production environment configuration
+# environment = "production"
+# asg_min_size = 2
+# asg_max_size = 10
+# asg_desired_capacity = 2
+# cpu_target_value = 60.0
+# alarm_cpu_threshold = 75.0
+# alarm_response_time_threshold = 0.5
+
+# Example: Staging environment with smaller footprint
+# environment = "staging"
+# instance_type = "t3.micro"
+# asg_min_size = 1
+# asg_max_size = 2
+# asg_desired_capacity = 1
+
+# ============================================================================
+# Notes
+# ============================================================================
+# 1. Variable validation: All variables include validation rules that run
+#    during terraform plan/apply. Invalid values will produce clear error
+#    messages with allowed value ranges.
+#
+# 2. Default VPC requirement: This deployment uses the default VPC in the
+#    specified aws_region. Ensure default VPC exists before deployment:
+#      aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --region <region>
+#
+# 3. Dynamic credentials: AWS authentication is via HCP Terraform dynamic
+#    credentials (OIDC). No AWS access keys should be configured in this file
+#    or as Terraform variables.
+#
+# 4. Cost optimization: For development/testing, use defaults. For production,
+#    increase asg_min_size to 2+ for high availability and adjust instance_type
+#    based on application requirements.
+#
+# 5. Security: This file does not contain sensitive values and can be committed
+#    to version control. DO NOT add AWS credentials or secrets to this file.
+# ============================================================================
