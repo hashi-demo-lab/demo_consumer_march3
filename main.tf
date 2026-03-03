@@ -93,3 +93,69 @@ resource "time_sleep" "alb_ready" {
     alb_arn = module.alb.arn
   }
 }
+
+# ============================================================================
+# Auto Scaling Group
+# ============================================================================
+
+module "autoscaling" {
+  source  = "app.terraform.io/hashi-demos-apj/autoscaling/aws"
+  version = "~> 9.0"
+
+  name                = "${local.naming_prefix}-asg"
+  vpc_zone_identifier = data.aws_subnets.default.ids
+
+  # Launch template configuration
+  image_id      = data.aws_ami.amazon_linux_2.id
+  instance_type = var.instance_type
+  security_groups = [
+    aws_security_group.asg_instances.id # Will be created in Item 4
+  ]
+
+  # Capacity configuration
+  min_size         = var.asg_min_size
+  max_size         = var.asg_max_size
+  desired_capacity = var.asg_desired_capacity
+
+  # Health check configuration
+  health_check_type         = "ELB"
+  health_check_grace_period = var.asg_health_check_grace_period
+
+  # ALB integration via traffic source attachments
+  traffic_source_attachments = {
+    web = {
+      traffic_source_identifier = module.alb.target_groups["web"].arn
+    }
+  }
+
+  # Target tracking scaling policy for CPU utilization
+  scaling_policies = {
+    cpu_target_tracking = {
+      policy_type = "TargetTrackingScaling"
+      target_tracking_configuration = {
+        predefined_metric_specification = {
+          predefined_metric_type = "ASGAverageCPUUtilization"
+        }
+        target_value = var.cpu_target_value
+      }
+    }
+  }
+
+  # CloudWatch metrics collection
+  enabled_metrics = [
+    "GroupMinSize",
+    "GroupMaxSize",
+    "GroupDesiredCapacity",
+    "GroupInServiceInstances",
+    "GroupPendingInstances",
+    "GroupStandbyInstances",
+    "GroupTerminatingInstances",
+    "GroupTotalInstances"
+  ]
+
+  tags = {
+    Component = "compute"
+  }
+
+  depends_on = [time_sleep.alb_ready]
+}

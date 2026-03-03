@@ -15,22 +15,22 @@ output "alb_zone_id" {
 
 output "asg_id" {
   description = "Auto Scaling Group identifier for AWS console reference"
-  value       = "" # TODO: wire to module.autoscaling.autoscaling_group_id in Item C (ASG module)
+  value       = module.autoscaling.autoscaling_group_id
 }
 
 output "asg_name" {
   description = "Auto Scaling Group name for CloudWatch metrics and API operations"
-  value       = "" # TODO: wire to module.autoscaling.autoscaling_group_name in Item C (ASG module)
+  value       = module.autoscaling.autoscaling_group_name
 }
 
 output "asg_arn" {
   description = "ARN of the Auto Scaling Group for IAM policy attachments and monitoring"
-  value       = "" # TODO: wire to module.autoscaling.autoscaling_group_arn in Item C (ASG module)
+  value       = module.autoscaling.autoscaling_group_arn
 }
 
 output "launch_template_id" {
   description = "Launch template identifier for AMI update workflows"
-  value       = "" # TODO: wire to module.autoscaling.launch_template_id in Item C (ASG module)
+  value       = module.autoscaling.launch_template_id
 }
 
 output "vpc_id" {
