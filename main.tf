@@ -193,3 +193,100 @@ module "autoscaling" {
 
   depends_on = [time_sleep.alb_ready]
 }
+
+# ============================================================================
+# CloudWatch Alarms
+# ============================================================================
+
+module "cloudwatch_alarm_asg_cpu" {
+  source  = "app.terraform.io/hashi-demos-apj/cloudwatch/aws//modules/metric-alarm"
+  version = "~> 5.7"
+
+  alarm_name          = "${local.naming_prefix}-asg-cpu-high"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.alarm_cpu_threshold
+  evaluation_periods  = 2
+  period              = 300
+  statistic           = "Average"
+
+  namespace   = "AWS/EC2"
+  metric_name = "CPUUtilization"
+
+  dimensions = {
+    AutoScalingGroupName = module.autoscaling.autoscaling_group_name
+  }
+
+  tags = {
+    Component = "monitoring"
+  }
+}
+
+module "cloudwatch_alarm_alb_response_time" {
+  source  = "app.terraform.io/hashi-demos-apj/cloudwatch/aws//modules/metric-alarm"
+  version = "~> 5.7"
+
+  alarm_name          = "${local.naming_prefix}-alb-response-time"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.alarm_response_time_threshold
+  evaluation_periods  = 2
+  period              = 300
+  statistic           = "Average"
+
+  namespace   = "AWS/ApplicationELB"
+  metric_name = "TargetResponseTime"
+
+  dimensions = {
+    LoadBalancer = module.alb.arn_suffix
+  }
+
+  tags = {
+    Component = "monitoring"
+  }
+}
+
+module "cloudwatch_alarm_alb_5xx" {
+  source  = "app.terraform.io/hashi-demos-apj/cloudwatch/aws//modules/metric-alarm"
+  version = "~> 5.7"
+
+  alarm_name          = "${local.naming_prefix}-alb-5xx-errors"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 10
+  evaluation_periods  = 2
+  period              = 300
+  statistic           = "Sum"
+
+  namespace   = "AWS/ApplicationELB"
+  metric_name = "HTTPCode_Target_5XX_Count"
+
+  dimensions = {
+    LoadBalancer = module.alb.arn_suffix
+  }
+
+  tags = {
+    Component = "monitoring"
+  }
+}
+
+module "cloudwatch_alarm_unhealthy_hosts" {
+  source  = "app.terraform.io/hashi-demos-apj/cloudwatch/aws//modules/metric-alarm"
+  version = "~> 5.7"
+
+  alarm_name          = "${local.naming_prefix}-unhealthy-hosts"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 0
+  evaluation_periods  = 1
+  period              = 60
+  statistic           = "Maximum"
+
+  namespace   = "AWS/ApplicationELB"
+  metric_name = "UnHealthyHostCount"
+
+  dimensions = {
+    LoadBalancer = module.alb.arn_suffix
+    TargetGroup  = module.alb.target_groups["web"].arn_suffix
+  }
+
+  tags = {
+    Component = "monitoring"
+  }
+}
