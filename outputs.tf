@@ -1,16 +1,16 @@
 output "alb_dns_name" {
   description = "DNS name of the Application Load Balancer for accessing the application"
-  value       = "" # TODO: wire to module.alb.dns_name in Item B (ALB module)
+  value       = module.alb.dns_name
 }
 
 output "alb_arn" {
   description = "ARN of the Application Load Balancer for CloudWatch metrics and logging configuration"
-  value       = "" # TODO: wire to module.alb.arn in Item B (ALB module)
+  value       = module.alb.arn
 }
 
 output "alb_zone_id" {
   description = "Route53 hosted zone ID of the ALB for DNS alias record creation"
-  value       = "" # TODO: wire to module.alb.zone_id in Item B (ALB module)
+  value       = module.alb.zone_id
 }
 
 output "asg_id" {
