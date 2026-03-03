@@ -28,7 +28,7 @@ Checkpoint after each phase: `bash .foundations/scripts/bash/checkpoint-commit.s
    - Run `terraform fmt -check` and `terraform validate` (validate may require `terraform init` first).
    - Checkpoint commit.
    Use concurrent subagents for independent items only when their outputs do not overlap.
-7. After all items: run `terraform validate`. If failures remain, re-launch `tf-consumer-developer` agent targeted at the specific errors (max 2 fix rounds).
+7. After all items: run `terraform validate`. If failures remain, re-launch `tf-consumer-developer` agent targeted at the specific errors.
 8. Verify all checklist items in consumer-design.md Section 5 are marked `[x]` via Grep. If any remain `[ ]`, either mark them (if the work was done by a prior item) or flag the gap before proceeding.
 
 ## Phase 4: Validate
@@ -40,7 +40,7 @@ Checkpoint after each phase: `bash .foundations/scripts/bash/checkpoint-commit.s
    Security is enforced by Sentinel policies at the workspace level and by modules being inherently secure — the validator does not perform a separate security review.
    Include `sandbox_deploy=false` in `$ARGUMENTS` for the initial validation pass (deploy is a separate step).
 10. Review validator output. If quality score < 7.0:
-    - Launch `tf-consumer-developer` agent targeted at specific issues (max 2 fix rounds).
+    - Launch `tf-consumer-developer` agent targeted at specific issues.
     - Re-run `tf-consumer-validator` after fixes.
 11. Ask user via `AskUserQuestion` whether to deploy to sandbox. Options:
     - **Deploy to sandbox** — will trigger plan+apply in HCP Terraform sandbox workspace
